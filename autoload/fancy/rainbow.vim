@@ -2,6 +2,9 @@ scriptencoding utf-8
 let s:save_cpo = &cpo
 set cpo&vim
 
+let g:fancy_rainbow_enable_smart = get(g:, "fancy_rainbow_enable_smart", 0)
+
+
 let s:rainbow_chart = [
 \	"E60012",
 \	"EB6100",
@@ -34,14 +37,24 @@ let s:fancy = {}
 
 
 function! s:set_highlight(...)
-	let count_ = get(a:, 1, 0)
-	for line in range(line("w0"), line("w$"))
-		for col in range(0, len(getline(line)))
-			let pattern = printf('^\%%%dl\s*\(\S\s*\)\{%d}\zs\S', line, col)
-			let color_num = (col + count_ + len(getline(line))) % len(s:rainbow_chart)
+	if g:fancy_rainbow_enable_smart
+		let count_ = get(a:, 1, 0)
+		for line in range(line("w0"), line("w$"))
+			for col in range(0, len(getline(line)))
+				let pattern = printf('^\%%%dl\s*\(\S\s*\)\{%d}\zs\S', line, col)
+				let color_num = (col + count_ + len(getline(line))) % len(s:rainbow_chart)
+				call matchadd("Rainbow" . color_num, pattern)
+			endfor
+		endfor
+	else
+		let width = 200
+		let count_ = get(a:, 1, 0)
+		for col in range(0, width)
+			let pattern = printf('^\s*\(\S\s*\)\{%d}\zs\S', col)
+			let color_num = (col + count_) % len(s:rainbow_chart)
 			call matchadd("Rainbow" . color_num, pattern)
 		endfor
-	endfor
+	endif
 endfunction
 
 
