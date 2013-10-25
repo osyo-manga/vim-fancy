@@ -25,9 +25,42 @@ function! s:idle_timer.end()
 	call fancy#disable()
 endfunction
 
-function! fancy#disable_when_idle()
+function! s:idle_timer.reset()
+	let self.latest_time = localtime()
+	call fancy#disable()
+endfunction
+
+
+function! s:idle_timer.update()
+	let now = localtime()
+	if (now - self.latest_time) > self.interval
+		call fancy#enable(self.fancy_name)
+	endif
+endfunction
+
+
+
+function! fancy#enable_when_idle(time, name)
+	if exists("s:timer")
+		return
+	endif
+	let s:timer = deepcopy(s:idle_timer)
+	call s:timer.start(a:time, a:name)
 	augroup fancy-idle
-		autocmd! * <buffer>
+		autocmd!
+		autocmd InsertEnter,BufLeave,CursorMoved * call s:timer.reset()
+		autocmd CursorHold * call feedkeys("g\<ESC>", 'n') | call s:timer.update()
+	augroup END
+endfunction
+
+
+function! fancy#disable_when_idle()
+	if !exists("s:timer")
+		return
+	endif
+
+	augroup fancy-idle
+		autocmd!
 	augroup END
 	call s:timer.end()
 	unlet! s:timer
