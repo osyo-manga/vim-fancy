@@ -25,35 +25,6 @@ function! s:idle_timer.end()
 	call fancy#disable()
 endfunction
 
-
-function! s:idle_timer.reset()
-	let self.latest_time = localtime()
-	call fancy#disable()
-endfunction
-
-
-function! s:idle_timer.update()
-	let now = localtime()
-	if (now - self.latest_time) > self.interval
-		call fancy#enable(self.fancy_name)
-	endif
-endfunction
-
-
-function! fancy#enable_when_idle(time, name)
-	if exists("s:timer)
-		return
-	endif
-	let s:timer = deepcopy(s:idle_timer)
-	call s:timer.start(a:time, a:name)
-	augroup fancy-idle
-		autocmd! * <buffer>
-		autocmd InsertEnter,BufLeave,CursorMoved <buffer> call s:timer.reset()
-		autocmd CursorHold <buffer> call feedkeys(mode() ==# 'i' ? "\<C-g>\<ESC>" : "g\<ESC>", 'n') | call s:timer.update()
-	augroup END
-endfunction
-
-
 function! fancy#disable_when_idle()
 	augroup fancy-idle
 		autocmd! * <buffer>
@@ -64,23 +35,33 @@ endfunction
 
 
 function! fancy#enable(name)
-	if exists("b:fancy")
+	if !exists("b:fancies")
+		let b:fancies = {}
+	endif
+	if has_key(b:fancies, a:name)
 \	|| !has_key(s:fancies, a:name)
 		return
 	endif
-	let b:fancy = deepcopy(s:fancies[a:name])
-	call b:fancy.enable({})
+	let fancy = deepcopy(s:fancies[a:name])
+	call fancy.enable({})
+	let b:fancies[a:name] = fancy
 endfunction
 
 
 function! fancy#disable()
-	if !exists("b:fancy")
+	if !exists("b:fancies")
 		return
 	endif
-	call b:fancy.disable({})
-	unlet! b:fancy
+	for fancy in values(b:fancies)
+		call fancy.disable({})
+	endfor
+	unlet! b:fancies
 endfunction
 
+
+function! fancy#list()
+	return map(split(globpath(&rtp, "*/fancy/*.vim"), "\n"), 'fnamemodify(v:val, ":t:r")')
+endfunction
 
 function! s:load()
 	for file in split(globpath(&rtp, "*/fancy/*.vim"), "\n")
