@@ -40,11 +40,13 @@ function! s:set_highlight(...)
 	if g:fancy_rainbow_enable_smart
 		let count_ = get(a:, 1, 0)
 		for line in range(line("w0"), line("w$"))
-			for col in range(0, len(getline(line)))
-				let pattern = printf('^\%%%dl\s*\(\S\s*\)\{%d}\zs\S', line, col)
-				let color_num = (col + count_ + len(getline(line))) % len(s:rainbow_chart)
-				call matchadd("Rainbow" . color_num, pattern)
-			endfor
+			if foldclosed(line) == -1
+				for col in range(0, len(getline(line)))
+					let pattern = printf('^\%%%dl\s*\(\S\s*\)\{%d}\zs\S', line, col)
+					let color_num = (col + count_ + len(getline(line))) % len(s:rainbow_chart)
+					call matchadd("Rainbow" . color_num, pattern)
+				endfor
+			endif
 		endfor
 	else
 		let width = 200
