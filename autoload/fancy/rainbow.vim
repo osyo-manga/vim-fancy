@@ -82,7 +82,7 @@ function! s:fancy.enable(context)
 	call s:set_highlight()
 	augroup fancy-rainbow
 		autocmd! * <buffer>
-		autocmd CursorHold <buffer> call s:update()
+		autocmd CursorHold <buffer> call feedkeys(mode() ==# 'i' ? "\<C-g>\<ESC>" : "g\<ESC>", 'n') | call s:update()
 	augroup END
 endfunction
 
